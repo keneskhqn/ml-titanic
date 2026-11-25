@@ -7,6 +7,11 @@ __pycache__/
 venv/
 env/
 
+# MLflow local tracking data (runs, metrics, registry)
+mlflow.db
+mlruns/
+mlartifacts/
+
 # Editor settings
 .vscode/
 .idea/
