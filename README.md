@@ -1,6 +1,26 @@
-# Titanic Survival Prediction API
+# Titanic Survival Prediction System
 
-A machine learning model that predicts whether a Titanic passenger survived, served as a REST API with **FastAPI**, packaged with **Docker**, with experiment tracking and model versioning in **MLflow**.
+A machine learning system that predicts whether a Titanic passenger survived. The model is served as a REST API with **FastAPI**, packaged with **Docker**, used through a **Streamlit** web interface, and tracked and versioned with **MLflow**.
+
+## Architecture
+
+```
+Training:   train.py ──► MLflow (experiments, metrics, Model Registry "titanic-model")
+                │
+                └──► model.joblib
+                          │
+Serving:    User ──► Streamlit (frontend.py, :8501) ──HTTP──► FastAPI in Docker (main.py, :8000) ──► model.joblib
+```
+
+| Component | File | Role |
+|---|---|---|
+| Training + MLflow | `train.py` | trains the models, logs experiments, registers versions, saves the chosen model |
+| Model | `model.joblib` | preprocessing + Random Forest in one pipeline |
+| API | `main.py` | FastAPI service with `GET /` and `POST /predict` |
+| Container | `Dockerfile` | runs the API in Docker |
+| Frontend | `frontend.py` | Streamlit page where users enter passenger data and see the prediction |
+
+The frontend does not load the model itself: it sends requests to the API, so the interface and the model service are independent parts.
 
 ## Project structure
 
@@ -11,6 +31,7 @@ ml-titanic/
 ├── train.py                  # trains 3 models, logs them to MLflow, saves the chosen one to model.joblib
 ├── model.joblib              # model used by the API (preprocessing + classifier)
 ├── main.py                   # FastAPI application
+├── frontend.py               # Streamlit web interface
 ├── requirements.txt          # Python dependencies
 ├── Dockerfile                # container instructions
 ├── .dockerignore
@@ -150,6 +171,56 @@ docker run -p 8000:8000 titanic-api
 
 The API is then available at http://localhost:8000 and http://localhost:8000/docs.
 
+## Frontend (Streamlit)
+
+`frontend.py` is a simple web interface for the model. The user fills in a form, and the page sends the data to the FastAPI `POST /predict` endpoint and shows the result.
+
+**Features:**
+
+- form with all passenger features: ticket class, sex, age, siblings/spouses, parents/children, fare, port of embarkation
+- "Age unknown" and "Unknown" port options (sent as missing values, filled by the model pipeline)
+- result as **Survived** / **Died** with the probability of survival
+- the exact request and response can be shown under "Request and response"
+- API status in the sidebar, and a clear error message if the API is not running
+
+### How to run
+
+The frontend needs the API to be running, so use two terminals.
+
+**Terminal 1: start the API** (locally or in Docker):
+
+```bash
+python -m uvicorn main:app --reload
+```
+
+or
+
+```bash
+docker run -p 8000:8000 titanic-api
+```
+
+**Terminal 2: start the frontend:**
+
+```bash
+python -m streamlit run frontend.py
+```
+
+Then open http://localhost:8501.
+
+By default the frontend calls the API at `http://127.0.0.1:8000`. A different address can be set with the `API_URL` environment variable, for example in PowerShell:
+
+```powershell
+$env:API_URL = "http://localhost:9000"
+python -m streamlit run frontend.py
+```
+
+### Example
+
+| Input | Result | Probability of survival |
+|---|---|---|
+| 3rd class, male, 25, fare 7.25, Southampton | Died | 8.6% |
+| 1st class, female, 29, fare 100, Southampton | Survived | 96.6% |
+
 ## API endpoints
 
 ### `GET /`
@@ -208,4 +279,4 @@ curl -X POST http://127.0.0.1:8000/predict \
 
 ## Tech stack
 
-Python 3.14 · pandas · scikit-learn · joblib · FastAPI · Uvicorn · Docker · MLflow
+Python 3.14 · pandas · scikit-learn · joblib · FastAPI · Uvicorn · Docker · MLflow · Streamlit · requests

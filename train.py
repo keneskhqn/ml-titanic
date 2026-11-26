@@ -67,8 +67,6 @@ experiments = [
     {"n_estimators": 100, "max_depth": 10},
 ]
 
-# Model used by the API (model.joblib). depth 5 is chosen over depth 10:
-# almost the same test scores, but much less overfitting (train 0.86 vs 0.95).
 API_MAX_DEPTH = 5
 chosen = None
 
