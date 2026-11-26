@@ -13,7 +13,6 @@ st.write(
     "survived the Titanic disaster. The prediction comes from the FastAPI service."
 )
 
-# ---------------- API status (sidebar) ----------------
 with st.sidebar:
     st.header("API status")
     st.write(f"API URL: `{API_URL}`")
@@ -26,7 +25,6 @@ with st.sidebar:
                  "`python -m uvicorn main:app --reload`\n\n"
                  "or `docker run -p 8000:8000 titanic-api`")
 
-# ---------------- Input form ----------------
 with st.form("passenger_form"):
     col1, col2 = st.columns(2)
 
@@ -52,9 +50,7 @@ with st.form("passenger_form"):
 
     submitted = st.form_submit_button("Predict", type="primary")
 
-# ---------------- Prediction ----------------
 if submitted:
-    # Same JSON body as POST /predict in Swagger
     payload = {
         "pclass": pclass,
         "sex": sex,
